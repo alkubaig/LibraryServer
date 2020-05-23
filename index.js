@@ -1,16 +1,25 @@
 const express = require('express')
 const bodyParser = require('body-parser');
-const app = express()
 const {updateBook, createBook, deleteBook, getBook, getBooks} = require('./storageFunctions.js');
+const cors = require('cors') //cross origin
+const app = express()
 
+app.use(cors());
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
 
 // ------------------------------------//
 
 //get all books
 app.get('/books', (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
 	res.send(getBooks())
 
 })
@@ -19,11 +28,17 @@ app.get('/books', (req, res) => {
 //add book (has body)
 app.post('/book', (req, res) => {
 
-  console.dir(req.body);
+  console.dir("body: ", req.body);
 
   let book = req.body
-  createBook(book)
-	res.send("I love Ali")
+  if (isEmpty(book)) {
+    res.status(404)
+    res.send("Empty body")
+  }
+  else {
+    res.send(createBook(book))
+  }
+
 })
 // ------------------------------------//
 
@@ -39,8 +54,8 @@ app.get('/book/:id', (req, res) => {
     res.send(newBook)
   }
   else {
+    res.status(404)
     res.send("Id not found " + id)
-    res.status(404).end()
   }
 })
 // ------------------------------------//
@@ -54,13 +69,21 @@ app.put('/book/:id', (req, res) => {
   let id =  req.params.id
   let book = req.body
 
+  if (isEmpty(book)) {
+    res.status(404)
+    res.send("Empty body")
+    // res.send({})
+  }
+
   let newBook =  updateBook(id,book)
   if (newBook) {
     res.send(newBook)
   }
   else {
+    res.status(404)
     res.send("Id not found " + id)
-    res.status(404).end()
+    // res.send({})
+
   }
 })
 // ------------------------------------//
@@ -73,10 +96,11 @@ app.delete('/book/:id', (req, res) => {
   let id =  req.params.id
 
   if (!deleteBook(id)) {
+    res.status(404)
     res.send("Id not found " + id)
-    res.status(404).end()
   }
   else {
+    res.send({})
     res.send("I love Ali")
   }
 })
